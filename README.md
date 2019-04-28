@@ -1,0 +1,7 @@
+# mybatis
+1、简单工厂 通过DefaultSqlSessionFactory创建DefaultSqlSession
+2、委派模式 创建Configuration对象，委派XMLConfigBuilder解析mybatis全局配置文件 ，委派XMLMapperBuilder解析mapper.xml文件
+3、动态代理：穿件MapperProxy对象使用动态代理模式
+4、责任链模式。拦截器拦截mybatis中的Executor、StatmentHandler、ParameterHandler、ResultSetHandler组装成InterceptorChain
+5、装饰器设计模式：CacheExecutor对SimpleExecutor、ReuseExecutor、BatchExecutor进行包装增强。
+6.模板方法设计模式 。BaseExecutor,对数据库的增删改查由具体的实现类实现
