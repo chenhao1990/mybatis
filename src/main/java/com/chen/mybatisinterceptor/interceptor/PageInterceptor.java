@@ -1,17 +1,14 @@
 package com.chen.mybatisinterceptor.interceptor;
 
-import org.apache.ibatis.builder.StaticSqlSource;
 import org.apache.ibatis.cache.CacheKey;
 import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.mapping.BoundSql;
 import org.apache.ibatis.mapping.MappedStatement;
-import org.apache.ibatis.mapping.SqlSource;
 import org.apache.ibatis.plugin.*;
 import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 import org.springframework.stereotype.Component;
 
-import java.lang.reflect.Field;
 import java.util.Properties;
 
 /**
@@ -27,23 +24,36 @@ public class PageInterceptor implements Interceptor {
     @Override
     public Object intercept(Invocation invocation) throws Throwable {
         Object[] args = invocation.getArgs();
+        System.out.println("参数：" + args);
         MappedStatement ms = (MappedStatement) args[0];
+        Object parameter = args[1];
         BoundSql boundSql = ms.getBoundSql(args[1]);
         RowBounds rb = (RowBounds) args[2];
+        ResultHandler resultHandler = (ResultHandler) args[3];
+        Executor executor = (Executor) invocation.getTarget();
+        CacheKey cacheKey;
+        if (args.length == 4) {
+            //4 个参数时
+            boundSql = ms.getBoundSql(parameter);
+            cacheKey = executor.createCacheKey(ms, parameter, rb, boundSql);
+        } else {
+            //6 个参数时
+            cacheKey = (CacheKey) args[4];
+            boundSql = (BoundSql) args[5];
+        }
         // RowBounds为空，无需分页
         if (rb == RowBounds.DEFAULT) {
             return invocation.proceed();
         }
         // 在SQL后加上limit语句
         String sql = boundSql.getSql();
+        System.out.println("sql语句：" + sql);
         String limit = String.format("LIMIT %d,%d", rb.getOffset(), rb.getLimit());
         sql = sql + " " + limit;
-        SqlSource sqlSource = new StaticSqlSource(ms.getConfiguration(), sql, boundSql.getParameterMappings());
-        //通过反射重新赋值sqlSource
-        Field field = MappedStatement.class.getDeclaredField("sqlSource");
-        field.setAccessible(true);
-        field.set(ms, sqlSource);
-        return invocation.proceed();
+
+        BoundSql pageBoundSql = new BoundSql(ms.getConfiguration(), sql, boundSql.getParameterMappings(), parameter);
+      return   executor.query(ms, parameter, rb, resultHandler, cacheKey, pageBoundSql);
+
     }
 
     @Override
