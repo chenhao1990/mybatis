@@ -27,7 +27,7 @@ public class PageInterceptor implements Interceptor {
         System.out.println("参数：" + args);
         MappedStatement ms = (MappedStatement) args[0];
         Object parameter = args[1];
-        BoundSql boundSql = ms.getBoundSql(args[1]);
+        BoundSql boundSql;
         RowBounds rb = (RowBounds) args[2];
         ResultHandler resultHandler = (ResultHandler) args[3];
         Executor executor = (Executor) invocation.getTarget();
@@ -52,7 +52,7 @@ public class PageInterceptor implements Interceptor {
         sql = sql + " " + limit;
 
         BoundSql pageBoundSql = new BoundSql(ms.getConfiguration(), sql, boundSql.getParameterMappings(), parameter);
-      return   executor.query(ms, parameter, rb, resultHandler, cacheKey, pageBoundSql);
+        return executor.query(ms, parameter, rb, resultHandler, cacheKey, pageBoundSql);
 
     }
 
